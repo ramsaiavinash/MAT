@@ -1,24 +1,64 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import RegistrationPage from './pages/RegistrationPage';
+import LoginPage from './pages/LoginPage';
+import ConfigurationPage from './pages/ConfigurationPage';
+import AssessmentOperationsSelectionPage from './pages/AssessmentOperationsSelectionPage';
+import AssessmentOperationsDashboard from './pages/AssessmentOperationsDashboard';
+import AssessmentReportPage from './pages/AssessmentReportPage';
+import CloudLoginPage from './pages/CloudLoginPage';
+import OnPremLoginPage from './pages/OnPremLoginPage';
+import HelpPage from './pages/HelpPage';
+import FeedbackPage from './pages/FeedbackPage';
+import AssessmentOptionsPage from './pages/AssessmentOptionsPage';
+import SharePointAssessmentPage from './pages/SharePointAssessmentPage';
+import IdentityAssessmentPage from './pages/IdentityAssessmentPage';
+import ExchangeAssessmentPage from './pages/ExchangeAssessmentPage';
+import OneDriveAssessmentPage from './pages/OneDriveAssessmentPage';
+import TeamsAssessmentPage from './pages/TeamsAssessmentPage';
+import CloudFileSharesAssessmentPage from './pages/CloudFileSharesAssessmentPage';
+import EnvironmentSelectionPage from './pages/EnvironmentSelectionPage';
+import Navbar from './components/Navbar';
+
+function AppContent() {
+  const location = useLocation();
+
+  return (
+    <>
+      <Navbar />
+      <main className="container mt-4" style={{ overflowY: 'auto' }}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/register" element={<RegistrationPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/configure" element={<ConfigurationPage />} />
+          <Route path="/environment-selection" element={<EnvironmentSelectionPage />} />
+          <Route path="/selection" element={<AssessmentOperationsSelectionPage />} />
+          <Route path="/dashboard" element={<AssessmentOperationsDashboard />} />
+          <Route path="/report" element={<AssessmentReportPage />} />
+          <Route path="/cloud-login" element={<CloudLoginPage />} />
+          <Route path="/on-prem-login" element={<OnPremLoginPage />} />
+          <Route path="/help" element={<HelpPage />} />
+          <Route path="/feedback" element={<FeedbackPage />} />
+          <Route path="/assessment-options" element={<AssessmentOptionsPage />} />
+          <Route path="/assessment-details/sharepoint-online" element={<SharePointAssessmentPage />} />
+          <Route path="/assessment-details/identity-online" element={<IdentityAssessmentPage />} />
+          <Route path="/assessment-details/exchange-online" element={<ExchangeAssessmentPage />} />
+          <Route path="/assessment-details/onedrive-for-business" element={<OneDriveAssessmentPage />} />
+          <Route path="/assessment-details/teams-enterprise-voice" element={<TeamsAssessmentPage />} />
+          <Route path="/assessment-details/cloud-file-shares" element={<CloudFileSharesAssessmentPage />} />
+        </Routes>
+      </main>
+    </>
+  );
+}
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <AppContent />
+    </Router>
   );
 }
 

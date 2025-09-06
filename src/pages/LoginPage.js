@@ -6,21 +6,35 @@ import Modal from '../components/Modal';
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Mock API call for authentication
-    console.log('Logging in user:', { email, password });
-    setTimeout(() => {
-      if (location.state && location.state.fromRegistration) {
-        navigate('/configure'); // Navigate directly to configuration page for new users
+    try {
+      const response = await fetch('http://localhost:3001/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Store user email to identify them in subsequent requests
+        sessionStorage.setItem('userEmail', data.email);
+        navigate('/dashboard'); // Always navigate to dashboard after login
       } else {
-        setShowModal(true);
+        alert(data.message || 'Login failed.');
       }
-    }, 1000);
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('An error occurred during login.');
+    }
   };
 
   const handleModalClose = () => {
@@ -55,7 +69,7 @@ const LoginPage = () => {
           <div className="mb-3">
             <label htmlFor="password" className="form-label">Password</label>
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               className="form-control"
               id="password"
               value={password}
@@ -63,6 +77,16 @@ const LoginPage = () => {
               required
               placeholder="Enter your password"
             />
+          </div>
+          <div className="mb-3 form-check">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              id="showPassword"
+              checked={showPassword}
+              onChange={() => setShowPassword(!showPassword)}
+            />
+            <label className="form-check-label" htmlFor="showPassword">Show Password</label>
           </div>
           <button type="submit" className="btn btn-primary w-100">Login</button>
         </form>

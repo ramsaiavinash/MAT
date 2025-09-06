@@ -5,14 +5,16 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const userEmail = sessionStorage.getItem('userEmail'); // Get user email
 
   const handleLogout = () => {
-    // Mock logout
+    sessionStorage.removeItem('userEmail'); // Clear user email on logout
     console.log('Logging out...');
     navigate('/login');
   };
 
-  const isHomePage = location.pathname === '/';
+  // Determine where the Home link should go
+  const homeLinkPath = userEmail ? '/dashboard' : '/';
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-cognizant-blue">
@@ -29,18 +31,14 @@ const Navbar = () => {
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav ms-auto">
             <li className="nav-item">
-              <Link className="nav-link" to="/">Home</Link>
+              <Link className="nav-link" to={homeLinkPath}>Home</Link>
             </li>
-            {isHomePage && (
-              <li className="nav-item">
-                <Link className="nav-link" to="/help">Get help</Link>
-              </li>
-            )}
-            {isHomePage && (
-              <li className="nav-item">
-                <Link className="nav-link" to="/feedback">Feedback</Link>
-              </li>
-            )}
+            <li className="nav-item">
+              <Link className="nav-link" to="/help">Get help</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/feedback">Feedback</Link>
+            </li>
             <li className="nav-item">
               <button className="btn btn-link nav-link" onClick={handleLogout}>Logout</button>
             </li>
@@ -50,5 +48,6 @@ const Navbar = () => {
     </nav>
   );
 };
+
 
 export default Navbar;

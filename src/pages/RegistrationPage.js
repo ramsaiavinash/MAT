@@ -5,16 +5,32 @@ import { useNavigate, Link } from 'react-router-dom';
 const RegistrationPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Mock API call
-    console.log('Registering user:', { email, password });
-    setTimeout(() => {
-      alert('Registration successful! Please login.');
-      navigate('/login', { state: { fromRegistration: true } });
-    }, 1000);
+    try {
+      const response = await fetch('http://localhost:3001/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Registration successful! Please login.');
+        navigate('/login', { state: { fromRegistration: true } });
+      } else {
+        alert(data.message || 'Registration failed.');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      alert('An error occurred during registration.');
+    }
   };
 
   return (
@@ -37,7 +53,7 @@ const RegistrationPage = () => {
           <div className="mb-3">
             <label htmlFor="password" className="form-label">Password</label>
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               className="form-control"
               id="password"
               value={password}
@@ -45,6 +61,16 @@ const RegistrationPage = () => {
               required
               placeholder="Enter your password"
             />
+          </div>
+          <div className="mb-3 form-check">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              id="showPassword"
+              checked={showPassword}
+              onChange={() => setShowPassword(!showPassword)}
+            />
+            <label className="form-check-label" htmlFor="showPassword">Show Password</label>
           </div>
           <button type="submit" className="btn btn-primary w-100">Register</button>
         </form>

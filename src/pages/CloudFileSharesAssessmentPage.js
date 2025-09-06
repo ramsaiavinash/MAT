@@ -29,9 +29,42 @@ const CloudFileSharesAssessmentPage = () => {
     setSelectedOptions([]);
   };
 
-  const handleSelect = () => {
+  const handleSelect = async () => {
     console.log('Selected items:', selectedOptions);
-    alert('Selected items: ' + selectedOptions.join(', '));
+    const userEmail = sessionStorage.getItem('userEmail');
+    if (!userEmail) {
+      alert('User not logged in. Please log in again.');
+      navigate('/login');
+      return;
+    }
+
+    for (const option of selectedOptions) {
+      try {
+        const response = await fetch('http://localhost:3001/users/assessments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: userEmail,
+            type: 'Cloud file shares',
+            reportName: option,
+            status: 'Selected',
+            date: new Date().toISOString().split('T')[0],
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          alert(`Failed to save ${option}: ${errorData.message || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error(`Error saving ${option}:`, error);
+        alert(`An error occurred while saving ${option}.`);
+      }
+    }
+    alert('Selected reports saved successfully!');
+    navigate('/dashboard');
   };
 
   return (

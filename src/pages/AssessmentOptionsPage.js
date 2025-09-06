@@ -4,22 +4,55 @@ import { useNavigate } from 'react-router-dom';
 const AssessmentOptionsPage = () => {
   const navigate = useNavigate();
 
-  const handleAssessmentTypeClick = (type) => {
+  const handleAssessmentTypeClick = async (type) => {
     console.log(`Selected Assessment Type: ${type}`);
-    if (type === 'Share Point online') {
-      navigate('/assessment-details/sharepoint-online');
-    } else if (type === 'Identity online (Entra)') {
-      navigate('/assessment-details/identity-online');
-    } else if (type === 'Exchange online') {
-      navigate('/assessment-details/exchange-online');
-    } else if (type === 'OneDrive for Business') {
-      navigate('/assessment-details/onedrive-for-business');
-    } else if (type === 'Teams & Enterprise Voice') {
-      navigate('/assessment-details/teams-enterprise-voice');
-    } else if (type === 'Cloud file shares') {
-      navigate('/assessment-details/cloud-file-shares');
-    } else {
-      // Handle unknown assessment type or do nothing
+    const userEmail = sessionStorage.getItem('userEmail');
+    if (!userEmail) {
+      alert('User not logged in. Please log in again.');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3001/users/assessments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: userEmail,
+          type: type,
+          reportName: `${type} Assessment - ${new Date().toLocaleString()}`,
+          status: 'Initiated',
+          date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert(`Failed to initiate assessment: ${errorData.message || 'Unknown error'}`);
+        return;
+      }
+
+      // Navigate after successful initiation
+      if (type === 'Share Point online') {
+        navigate('/assessment-details/sharepoint-online');
+      } else if (type === 'Identity online (Entra)') {
+        navigate('/assessment-details/identity-online');
+      } else if (type === 'Exchange online') {
+        navigate('/assessment-details/exchange-online');
+      } else if (type === 'OneDrive for Business') {
+        navigate('/assessment-details/onedrive-for-business');
+      } else if (type === 'Teams & Enterprise Voice') {
+        navigate('/assessment-details/teams-enterprise-voice');
+      } else if (type === 'Cloud file shares') {
+        navigate('/assessment-details/cloud-file-shares');
+      } else {
+        // Handle unknown assessment type or do nothing
+      }
+    } catch (error) {
+      console.error('Error initiating assessment:', error);
+      alert('An error occurred while initiating the assessment.');
     }
   };
 

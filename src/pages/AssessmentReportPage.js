@@ -21,7 +21,7 @@ const AssessmentReportPage = () => {
   };
 
   return (
-    <div className="container mt-5">
+    <div className="container mt-5" style={{ maxHeight: 'calc(100vh - 150px)', overflowY: 'auto' }}>
       <h1 className="mb-4">Assessment Report</h1>
       <div className="card mb-4">
         <div className="card-header">
@@ -40,26 +40,28 @@ const AssessmentReportPage = () => {
           Vulnerability Details
         </div>
         <div className="card-body">
-          <table className="table">
-            <thead>
-              <tr>
-                <th scope="col">ID</th>
-                <th scope="col">Severity</th>
-                <th scope="col">Description</th>
-                <th scope="col">Recommendation</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assessment.details.map(vulnerability => (
-                <tr key={vulnerability.id}>
-                  <td>{vulnerability.id}</td>
-                  <td>{vulnerability.severity}</td>
-                  <td>{vulnerability.description}</td>
-                  <td>{vulnerability.recommendation}</td>
+          <div className="table-responsive">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Severity</th>
+                  <th scope="col">Description</th>
+                  <th scope="col">Recommendation</th>
                 </tr>
-              ))}
+              </thead>
+              <tbody>
+                {assessment.details.map(vulnerability => (
+                  <tr key={vulnerability.id}>
+                    <td>{vulnerability.id}</td>
+                    <td>{vulnerability.severity}</td>
+                    <td>{vulnerability.description}</td>
+                    <td>{vulnerability.recommendation}</td>
+                  </tr>
+                ))}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
       </div>
     </div>

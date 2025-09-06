@@ -1,16 +1,41 @@
 // This is a placeholder for the Feedback Page.
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const FeedbackPage = () => {
   const [feedback, setFeedback] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // In a real application, you would send this feedback to a backend server.
-    console.log('Feedback submitted:', feedback);
-    setSubmitted(true);
-    setFeedback(''); // Clear the form
+    const userEmail = sessionStorage.getItem('userEmail'); // Get user email from session storage
+    if (!userEmail) {
+      alert('User not logged in. Please log in again.');
+      navigate('/login'); // Assuming you have navigate imported and available
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3001/users/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: userEmail, feedback }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setSubmitted(true);
+        setFeedback(''); // Clear the form
+      } else {
+        alert(`Failed to submit feedback: ${data.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Feedback submission error:', error);
+      alert('An error occurred while submitting feedback.');
+    }
   };
 
   return (

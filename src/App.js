@@ -20,21 +20,22 @@ import TeamsAssessmentPage from './pages/TeamsAssessmentPage';
 import CloudFileSharesAssessmentPage from './pages/CloudFileSharesAssessmentPage';
 import EnvironmentSelectionPage from './pages/EnvironmentSelectionPage';
 import Navbar from './components/Navbar';
+import AssessmentDetailsPage from './pages/AssessmentDetailsPage'; // Import the new page
 
 function AppContent() {
   const location = useLocation();
 
   return (
-    <>
+    <div style={{ minHeight: '100vh', overflowY: 'auto' }}>
       <Navbar />
-      <main className="container mt-4" style={{ overflowY: 'auto' }}>
+      <main className="container mt-4">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/register" element={<RegistrationPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/configure" element={<ConfigurationPage />} />
+          <Route path="/configuration" element={<ConfigurationPage />} />
           <Route path="/environment-selection" element={<EnvironmentSelectionPage />} />
-          <Route path="/selection" element={<AssessmentOperationsSelectionPage />} />
+          <Route path="/assessment-operations-selection" element={<AssessmentOperationsSelectionPage />} />
           <Route path="/dashboard" element={<AssessmentOperationsDashboard />} />
           <Route path="/report" element={<AssessmentReportPage />} />
           <Route path="/cloud-login" element={<CloudLoginPage />} />
@@ -42,6 +43,7 @@ function AppContent() {
           <Route path="/help" element={<HelpPage />} />
           <Route path="/feedback" element={<FeedbackPage />} />
           <Route path="/assessment-options" element={<AssessmentOptionsPage />} />
+          <Route path="/assessment-details" element={<AssessmentDetailsPage />} /> 
           <Route path="/assessment-details/sharepoint-online" element={<SharePointAssessmentPage />} />
           <Route path="/assessment-details/identity-online" element={<IdentityAssessmentPage />} />
           <Route path="/assessment-details/exchange-online" element={<ExchangeAssessmentPage />} />
@@ -50,7 +52,7 @@ function AppContent() {
           <Route path="/assessment-details/cloud-file-shares" element={<CloudFileSharesAssessmentPage />} />
         </Routes>
       </main>
-    </>
+    </div>
   );
 }
 

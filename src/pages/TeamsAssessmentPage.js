@@ -53,8 +53,7 @@ const TeamsAssessmentPage = () => {
     setSelectedOptions([]);
   };
 
-  const handleSelect = async () => {
-    console.log('Selected items:', selectedOptions);
+  const handleExecute = async () => {
     const userEmail = sessionStorage.getItem('userEmail');
     if (!userEmail) {
       alert('User not logged in. Please log in again.');
@@ -62,33 +61,55 @@ const TeamsAssessmentPage = () => {
       return;
     }
 
-    for (const option of selectedOptions) {
+    if (selectedOptions.length === 0) {
+      alert('Please select at least one report.');
+      return;
+    }
+
+    const initiatedJobs = [];
+    const assessmentType = 'Teams & Enterprise Voice';
+
+    for (const reportName of selectedOptions) {
       try {
-        const response = await fetch('http://localhost:3001/users/assessments', {
+        const response = await fetch('http://localhost:3001/api/execute-report', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             email: userEmail,
-            type: 'Teams & Enterprise Voice',
-            reportName: option,
-            status: 'Selected',
-            date: new Date().toISOString().split('T')[0],
+            assessmentType,
+            reportName,
           }),
         });
 
-        if (!response.ok) {
+        if (response.ok) {
+          const data = await response.json();
+          initiatedJobs.push({
+            jobId: data.jobId,
+            reportName: reportName,
+            assessmentType: assessmentType,
+          });
+        } else {
           const errorData = await response.json();
-          alert(`Failed to save ${option}: ${errorData.message || 'Unknown error'}`);
+          console.error(`Failed to initiate report ${reportName}: ${errorData.message || 'Unknown error'}`);
+          alert(`Failed to initiate report ${reportName}: ${errorData.message || 'Unknown error'}`);
         }
       } catch (error) {
-        console.error(`Error saving ${option}:`, error);
-        alert(`An error occurred while saving ${option}.`);
+        console.error(`Error initiating report ${reportName}:`, error);
+        alert(`An error occurred while initiating report ${reportName}.`);
       }
     }
-    alert('Selected reports saved successfully!');
-    navigate('/dashboard');
+
+    if (initiatedJobs.length > 0) {
+      const jobIds = initiatedJobs.map(job => job.jobId).join(',');
+      const reportNames = initiatedJobs.map(job => job.reportName).join(',');
+      const assessmentTypes = initiatedJobs.map(job => job.assessmentType).join(',');
+
+      navigate(`/dashboard?jobIds=${jobIds}&reportNames=${reportNames}&assessmentTypes=${assessmentTypes}`);
+    } else {
+      alert('No reports were successfully initiated.');
+    }
   };
 
   return (
@@ -124,7 +145,7 @@ const TeamsAssessmentPage = () => {
           <div className="d-flex justify-content-between mt-4">
             <button className="btn btn-outline-primary" onClick={handleSelectAll}>Select All</button>
             <button className="btn btn-outline-warning" onClick={handleClear}>Clear</button>
-            <button className="btn btn-success" onClick={handleSelect}>Select</button>
+            <button className="btn btn-success" onClick={handleExecute}>Execute</button>
           </div>
         </div>
       </div>

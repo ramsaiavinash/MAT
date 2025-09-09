@@ -7,7 +7,7 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
   background-color: #ffffff; /* White background for the body */
   height: 100%; /* Set html and body height to 100% */
-  overflow: hidden; /* Prevent scrolling */
+  overflow: auto; /* Allow scrolling */
 }
 
 code {

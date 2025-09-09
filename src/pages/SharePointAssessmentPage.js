@@ -57,10 +57,63 @@ const SharePointAssessmentPage = () => {
     setSelectedOptions([]);
   };
 
-  const handleSelect = () => {
-    console.log('Selected items:', selectedOptions);
-    // In a real app, you would process these selected options
-    alert('Selected items: ' + selectedOptions.join(', '));
+  const handleExecute = async () => {
+    const userEmail = sessionStorage.getItem('userEmail');
+    if (!userEmail) {
+      alert('User not logged in. Please log in again.');
+      navigate('/login');
+      return;
+    }
+
+    if (selectedOptions.length === 0) {
+      alert('Please select at least one report.');
+      return;
+    }
+
+    const initiatedJobs = [];
+    const assessmentType = 'Share Point online';
+
+    for (const reportName of selectedOptions) {
+      try {
+        const response = await fetch('http://localhost:3001/api/execute-report', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: userEmail,
+            assessmentType,
+            reportName,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          initiatedJobs.push({
+            jobId: data.jobId,
+            reportName: reportName,
+            assessmentType: assessmentType,
+          });
+        } else {
+          const errorData = await response.json();
+          console.error(`Failed to initiate report ${reportName}: ${errorData.message || 'Unknown error'}`);
+          alert(`Failed to initiate report ${reportName}: ${errorData.message || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error(`Error initiating report ${reportName}:`, error);
+        alert(`An error occurred while initiating report ${reportName}.`);
+      }
+    }
+
+    if (initiatedJobs.length > 0) {
+      const jobIds = initiatedJobs.map(job => job.jobId).join(',');
+      const reportNames = initiatedJobs.map(job => job.reportName).join(',');
+      const assessmentTypes = initiatedJobs.map(job => job.assessmentType).join(',');
+
+      navigate(`/dashboard?jobIds=${jobIds}&reportNames=${reportNames}&assessmentTypes=${assessmentTypes}`);
+    } else {
+      alert('No reports were successfully initiated.');
+    }
   };
 
   return (
@@ -115,7 +168,7 @@ const SharePointAssessmentPage = () => {
           <div className="d-flex justify-content-between mt-4">
             <button className="btn btn-outline-primary" onClick={handleSelectAll}>Select All</button>
             <button className="btn btn-outline-warning" onClick={handleClear}>Clear</button>
-            <button className="btn btn-success" onClick={handleSelect}>Select</button>
+            <button className="btn btn-success" onClick={handleExecute}>Execute</button>
           </div>
         </div>
       </div>

@@ -10,7 +10,7 @@ const EnvironmentSelectionPage = () => {
       <div className="d-grid gap-3 col-md-8 mx-auto mt-4">
         <button
           className="btn btn-primary btn-lg"
-          onClick={() => navigate('/cloud-login')}
+          onClick={() => navigate('/assessment-operations-selection')}
         >
           Collaborate on Cloud
         </button>

@@ -1,18 +1,177 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+
+const allAssessmentReports = {
+  'Identity online (Entra)': [
+    'Users Report',
+    'Security Groups Report',
+    'M365 Groups Report',
+    'Devices Report',
+    'Contact Report',
+    'Azure AD Connect Configuration Report',
+    'Enterprise Apps Report',
+    'MFA Report',
+    'Conditional Access Policies Report',
+    'Password Expiration Policy Report',
+    'App Registration Expiration Policy Report',
+  ],
+  'Exchange online': [
+    'Exchange Org Structure',
+    'M365 Groups',
+    'Journaling Rules',
+    'SPF, DKIM, DMARC',
+    'No. of Users',
+    'Total mailbox count',
+    'Type of mailboxes',
+    'Public folder details',
+    'Public folder mailboxes',
+    'Mailbox permissions',
+    'Mailbox delegation',
+    'Litigation / Compliance hold',
+    'Mailbox size',
+    'Archive mailbox usage',
+    'Distribution Groups and membership',
+    'Mail Enabled Security group',
+    'Email delivery restrictions for groups and mailboxes',
+    'Group delegations',
+    'Group moderation settings',
+    'Mail Contacts',
+    'Meeting room list',
+    'Meeting room configurations',
+    'Resource mailbox booking / calendar processing configuration',
+    'SMTP addresses',
+    'Email Forwarding (internal/external)',
+    'Mailbox Auto reply',
+    'Mail tips assigned to mailboxes',
+    'Mailboxes hidden from GAL',
+    'Mailbox rules',
+    'Transport rules',
+  ],
+  'Share Point online': [
+    'Site Collections Usage Report',
+    'Site collections Ownership Report',
+    'Checked out documents report',
+    'WSP/App Catalog report',
+    'Sharepoint Site User/Group high level Permission report',
+    'Managed Metadata Termstore Report',
+    'Content Search Query rules',
+    'Custom Solution Report',
+    'Custom Features Report',
+    'Custom Event Receiver Information Report',
+    'Lists with workflows',
+    'Checked Out Files Report',
+    'List Views Approaching Recommended Thresholds Report',
+    'Lists without a major version limit',
+    'Lookup Column Information Report',
+    'Custom Master Pages and Page Layouts Report',
+    'Custom Web Part Pages Report',
+    'Deprecated Site Template Report',
+    'Orphaned Users (disabled in Active Directory)',
+    'Documents/list items with custom permissions',
+    'Sites unchanged in the last 6 months',
+    'Site Collections enabled with Site Collection App Catalog',
+    'Site Collections with custom SPFx Apps',
+    'Forms Report',
+    'Tenant level PowerAutomate Flows Report',
+    'Tenant level PowerApps Report',
+    'Office 365 Groups usage and Expiration report',
+    'Teams usage report',
+    'SPO Tenant Config Data',
+  ],
+  'OneDrive for Business': [
+    'Detailed Onedrive Usage report',
+    'Unlicensed Onedrive user report',
+    'Onedrive Configuration report',
+  ],
+  'Teams & Enterprise Voice': [
+    'Teams users List',
+    'Teams Enterprise Voice users List',
+    'Unassigned Numbers',
+    'List of Teams',
+    'Teams Data size and Storage Reports',
+    'Teams Owners list',
+    'Ownerless Teams',
+    'Teams Members list',
+    'Auto Attendants',
+    'Call Queues',
+    'Resource Accounts',
+    'App Permission Policies',
+    'Teams Policies',
+    'Meeting Policies',
+    'Calling Policies',
+    'Call Hold Policies',
+    'Call Park Policies',
+    'Caller ID Policies',
+    'Emergency Policies',
+    'Voice Routing Policies',
+    'Voicemail policies',
+    'Dial Plans',
+    'Voice Routes',
+    'Online Voice gateways',
+    'Network Regions',
+    'Network Locations',
+    'Trusted IP Addressess',
+    'Teams Devices',
+  ],
+  'Cloud file shares': [
+    'File Share Permissions Report',
+    'File Share Size Report',
+    'File Share Age Report',
+    'Duplicate File Report',
+  ],
+};
 
 const AssessmentOperationsDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const userEmail = sessionStorage.getItem('userEmail');
-  const userName = userEmail ? userEmail.split('@')[0].replace(/\d+/g, '') : 'User';
-
   const [assessments, setAssessments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAssessment, setSelectedAssessment] = useState(null);
+  const [reportJobs, setReportJobs] = useState([]);
 
   useEffect(() => {
     if (!userEmail) {
       navigate('/login');
       return;
+    }
+
+    const queryParams = new URLSearchParams(location.search);
+    const jobIdsParam = queryParams.get('jobIds');
+    const reportNamesParam = queryParams.get('reportNames');
+    const assessmentTypesParam = queryParams.get('assessmentTypes');
+
+    if (jobIdsParam && reportNamesParam && assessmentTypesParam) {
+      const jobIds = jobIdsParam.split(',');
+      const reportNames = reportNamesParam.split(',');
+      const assessmentTypes = assessmentTypesParam.split(',');
+
+      const newJobs = [];
+      for (let i = 0; i < jobIds.length; i++) {
+        const jobId = jobIds[i];
+        const reportName = decodeURIComponent(reportNames[i]);
+        const assessmentType = decodeURIComponent(assessmentTypes[i]);
+
+        newJobs.push({
+          jobId,
+          reportName,
+          assessmentType,
+          status: 'In Progress',
+          date: new Date().toLocaleString(),
+          output: null,
+        });
+      }
+
+      setReportJobs((prevJobs) => {
+        const uniqueNewJobs = newJobs.filter(
+          (newJob) => !prevJobs.some((prevJob) => prevJob.jobId === newJob.jobId)
+        );
+        return [...prevJobs, ...uniqueNewJobs];
+      });
+
+      if (assessmentTypes.length > 0) {
+        setSelectedAssessment(decodeURIComponent(assessmentTypes[0]));
+      }
     }
 
     const fetchAssessments = async () => {
@@ -34,39 +193,105 @@ const AssessmentOperationsDashboard = () => {
     };
 
     fetchAssessments();
-  }, [userEmail, navigate]);
+  }, [userEmail, navigate, location.search]);
 
-  const handleView = (id) => {
-    navigate(`/report?id=${id}`);
+  useEffect(() => {
+    const intervals = {};
+
+    reportJobs.forEach((job) => {
+      if (job.status === 'In Progress') {
+        intervals[job.jobId] = setInterval(async () => {
+          try {
+            const response = await fetch(`http://localhost:3001/api/report-status/${job.jobId}`);
+            if (response.ok) {
+              const data = await response.json();
+              setReportJobs((prevJobs) =>
+                prevJobs.map((prevJob) =>
+                  prevJob.jobId === job.jobId
+                    ? { ...prevJob, status: data.status, output: data.output || prevJob.output }
+                    : prevJob
+                )
+              );
+
+              if (data.status !== 'In Progress') {
+                clearInterval(intervals[job.jobId]);
+              }
+            } else {
+              console.error(`Failed to fetch status for job ${job.jobId}:`, response.statusText);
+              setReportJobs((prevJobs) =>
+                prevJobs.map((prevJob) =>
+                  prevJob.jobId === job.jobId ? { ...prevJob, status: 'Failed' } : prevJob
+                )
+              );
+              clearInterval(intervals[job.jobId]);
+            }
+          } catch (error) {
+            console.error(`Error polling for job ${job.jobId}:`, error);
+            setReportJobs((prevJobs) =>
+              prevJobs.map((prevJob) =>
+                prevJob.jobId === job.jobId ? { ...prevJob, status: 'Failed' } : prevJob
+              )
+            );
+            clearInterval(intervals[job.jobId]);
+          }
+        }, 3000);
+      }
+    });
+
+    return () => {
+      Object.values(intervals).forEach(clearInterval);
+    };
+  }, [reportJobs]);
+
+  const getReportStatus = (assessmentType, reportName) => {
+    const activeJob = reportJobs.find(
+      (job) => job.assessmentType === assessmentType && job.reportName === reportName
+    );
+
+    if (activeJob) {
+      return {
+        status: activeJob.status,
+        date: activeJob.date,
+        output: activeJob.output,
+      };
+    }
+
+    const reports = assessments
+      .filter(
+        (assessment) =>
+          assessment.type === assessmentType && assessment.reportName === reportName
+      )
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    if (reports.length > 0) {
+      const latestReport = reports[0];
+      return {
+        status: latestReport.status,
+        date: new Date(latestReport.date).toLocaleString(),
+        output: null,
+      };
+    }
+
+    return {
+      status: 'Not Initiated',
+      date: '-',
+      output: null,
+    };
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this assessment? This action cannot be undone.')) {
-      return;
-    }
-
-    const userEmail = sessionStorage.getItem('userEmail');
-    if (!userEmail) {
-      alert('User not logged in. Please log in again.');
-      navigate('/login');
-      return;
-    }
-
-    try {
-      const response = await fetch(`http://localhost:3001/users/assessments/${userEmail}/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setAssessments(assessments.filter(assessment => assessment.id !== id));
-        alert('Assessment deleted successfully!');
-      } else {
-        const errorData = await response.json();
-        alert(`Failed to delete assessment: ${errorData.message || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error('Error deleting assessment:', error);
-      alert('An error occurred while deleting the assessment.');
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case 'Initiated':
+      case 'In Progress':
+        return 'bg-warning text-dark';
+      case 'Completed':
+        return 'bg-success';
+      case 'Failed':
+        return 'bg-danger';
+      case 'Selected':
+        return 'bg-info text-dark';
+      default:
+        return 'bg-secondary';
     }
   };
 
@@ -74,85 +299,104 @@ const AssessmentOperationsDashboard = () => {
     return <div className="container mt-5 text-center">Loading assessments...</div>;
   }
 
+  const userName = userEmail ? userEmail.split('@')[0] : 'Guest';
+
   return (
-    <div className="d-flex">
-      {/* Sidebar */}
-      <div className="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark" style={{ width: '280px', height: '100vh' }}>
-        <a href="/" className="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-          <span className="fs-4">MAT</span>
-        </a>
-        <hr />
-        <ul className="nav nav-pills flex-column mb-auto">
-          <li className="nav-item">
-            <a href="#" className="nav-link active" aria-current="page">
-              Dashboard
-            </a>
-          </li>
-        </ul>
-        <hr />
-        <div className="dropdown">
-          <a href="#" className="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-            <strong>User</strong>
-          </a>
-          <ul className="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
-            <li><a className="dropdown-item" href="#">Profile</a></li>
-            <li><a className="dropdown-item" href="#">Settings</a></li>
-            <li><hr className="dropdown-divider" /></li>
-            <li><a className="dropdown-item" href="#">Sign out</a></li>
-          </ul>
-        </div>
+    <div className="container-fluid p-4" style={{ minHeight: '100vh', overflowY: 'auto' }}>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+        <h1 className="h3 m-0">Assessment Operations Dashboard</h1>
+        <button className="btn btn-primary" onClick={() => navigate('/configuration')}>
+          Go to Configuration
+        </button>
       </div>
-
-      {/* Main content */}
-      <div className="container-fluid p-4">
-        <h1 className="h3 mb-3">Assessment Operations Dashboard</h1>
-        <p className="lead">Welcome {userName}!</p>
-
-        <div className="d-flex justify-content-end mb-3">
-          <button className="btn btn-primary me-2" onClick={() => navigate('/configure')}>Go to Configuration</button>
+      <h2 className="text-center mb-4" style={{ color: '#003366' }}>Welcome, {userName}!</h2>
+      <div className="row">
+        <div className="col-md-4">
+          <div className="card">
+            <div className="card-header">Assessment Types</div>
+            <div className="list-group list-group-flush" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+              {Object.keys(allAssessmentReports).map((type) => (
+                <button
+                  key={type}
+                  className={`list-group-item list-group-item-action ${
+                    selectedAssessment === type ? 'active' : ''
+                  }`}
+                  onClick={() => setSelectedAssessment(type)}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-
-        <div className="card">
-          <div className="card-header">
-            Assessments
-          </div>
-          <div className="card-body" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-            {assessments.length === 0 ? (
-              <p>No assessments initiated yet. Go to Assessment Options to start one.</p>
-            ) : (
-              <table className="table table-striped">
-                <thead>
-                  <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Type</th>
-                    <th scope="col">Report Name</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Date</th>
-                    <th scope="col">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {assessments.map((assessment, index) => (
-                    <tr key={assessment.id}>
-                      <th scope="row">{index + 1}</th>
-                      <td>{assessment.type}</td>
-                      <td>{assessment.reportName}</td>
-                      <td>{assessment.status}</td>
-                      <td>{assessment.date}</td>
-                      <td>
-                        <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleView(assessment.id)}>View</button>
-                        <button className="btn btn-sm btn-outline-secondary" onClick={() => handleDelete(assessment.id)}>Delete</button>
-                      </td>
+        <div className="col-md-8">
+          {selectedAssessment && allAssessmentReports[selectedAssessment] && Array.isArray(allAssessmentReports[selectedAssessment]) && (
+            <div className="card">
+              <div className="card-header">{selectedAssessment} Reports</div>
+              <div className="card-body" style={{ maxHeight: '800px', overflowY: 'auto' }}>
+                <table className="table table-striped">
+                  <thead>
+                    <tr>
+                      <th scope="col">Report Name</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">Execution Date</th>
+                      <th scope="col">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+                  </thead>
+                  <tbody>
+                    {allAssessmentReports[selectedAssessment].map((reportName) => {
+                      const { status, date, output } = getReportStatus(selectedAssessment, reportName);
+                      const isJobCompleted = status === 'Completed';
+                      const isJobFailed = status === 'Failed';
+                      return (
+                        <tr key={reportName}>
+                          <td>{reportName}</td>
+                          <td>
+                            <span
+                              className={`badge ${getStatusBadgeClass(status)}`}
+                            >
+                              {status}
+                            </span>
+                          </td>
+                          <td>{date}</td>
+                          <td>
+                            {isJobCompleted && (
+                              <button
+                                className="btn btn-sm btn-primary me-2"
+                                onClick={() => alert(`Report Output:\n${output}`)}
+                              >
+                                View
+                              </button>
+                            )}
+                            {isJobFailed && (
+                              <button
+                                className="btn btn-sm btn-danger"
+                                onClick={() => alert(`Error Details:\n${output}`)}
+                              >
+                                View Error
+                              </button>
+                            )}
+                            {!isJobCompleted && !isJobFailed && status !== 'Not Initiated' && (
+                              <button
+                                className="btn btn-sm btn-secondary"
+                                disabled
+                              >
+                                Running...
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-export default AssessmentOperationsDashboard;
+export default AssessmentOperationsDashboard

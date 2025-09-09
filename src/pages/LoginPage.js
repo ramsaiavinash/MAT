@@ -33,7 +33,7 @@ const LoginPage = () => {
       }
     } catch (error) {
       console.error('Login error:', error);
-      alert('An error occurred during login.');
+      alert(error.message || 'An error occurred during login.');
     }
   };
 

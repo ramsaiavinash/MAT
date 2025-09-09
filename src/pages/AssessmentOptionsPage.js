@@ -57,8 +57,8 @@ const AssessmentOptionsPage = () => {
   };
 
   return (
-    <div className="container mt-5">
-      <h2 className="text-center" style={{ color: '#003366' }}>Select Assessment Type</h2>
+    <div className="container mt-5" style={{ minHeight: '100vh', overflowY: 'auto' }}>
+      <h2 className="text-center" style={{ color: '#003366' }}>Select M365 Technology</h2>
       <div className="d-grid gap-3 col-md-8 mx-auto mt-4">
         <button className="btn btn-primary btn-lg" onClick={() => handleAssessmentTypeClick('Identity online (Entra)')}>Identity online (Entra)</button>
         <button className="btn btn-primary btn-lg" onClick={() => handleAssessmentTypeClick('Exchange online')}>Exchange online</button>
@@ -68,7 +68,7 @@ const AssessmentOptionsPage = () => {
         <button className="btn btn-primary btn-lg" onClick={() => handleAssessmentTypeClick('Cloud file shares')}>Cloud file shares</button>
       </div>
       <div className="text-center mt-4">
-        <button className="btn btn-secondary" onClick={() => navigate('/selection')}>Back to Selection</button>
+        <button className="btn btn-secondary" onClick={() => navigate('/assessment-operations-selection')}>Back to Selection</button>
       </div>
     </div>
   );
